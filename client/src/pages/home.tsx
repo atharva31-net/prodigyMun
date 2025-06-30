@@ -18,7 +18,7 @@ export default function Home() {
                 alt="Prodigy Public School Logo" 
                 className="w-8 h-8 rounded-lg object-cover"
               />
-              <h1 className="text-xl font-bold text-foreground">Prodigy MUN 2024</h1>
+              <h1 className="text-xl font-bold text-foreground">Prodigy MUN 2025</h1>
             </div>
             <Link href="/admin-login">
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
@@ -43,7 +43,7 @@ export default function Home() {
               />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Model United Nations 2024
+              Model United Nations 2025
             </h1>
             <p className="text-lg text-muted-foreground mb-2">
               Prodigy Public School, Wagholi - Pune
