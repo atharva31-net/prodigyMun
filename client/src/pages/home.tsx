@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
 import RegistrationForm from "@/components/registration-form";
 import schoolImage from "@assets/IMG_20250627_141514660_1751260346213.jpg";
+import logoImage from "@assets/images (4)_1751262564527.jpeg";
 
 export default function Home() {
   return (
@@ -12,9 +13,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">P</span>
-              </div>
+              <img 
+                src={logoImage} 
+                alt="Prodigy Public School Logo" 
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <h1 className="text-xl font-bold text-foreground">Prodigy MUN 2024</h1>
             </div>
             <Link href="/admin-login">

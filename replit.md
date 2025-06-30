@@ -128,6 +128,9 @@ A comprehensive Model United Nations registration website for Prodigy Public Sch
 - June 30, 2025. Initial setup with separate Indian/International committee sections
 - June 30, 2025. Updated to unified committee display per user request
 - June 30, 2025. Changed admin password to: munprodiy#123@12@12
+- June 30, 2025. Added registration management system (confirm/reject/remove functionality)
+- June 30, 2025. Integrated school logo in navigation (replaced placeholder "P")
+- June 30, 2025. Created comprehensive ChatGPT documentation (CHATGPT_COMPREHENSIVE_GUIDE.md)
 
 ## User Preferences
 

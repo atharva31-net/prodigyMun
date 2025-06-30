@@ -58,8 +58,8 @@ export default function AdminDashboard() {
     queryKey: ["/api/registrations/stats"],
   });
 
-  const registrations = registrationsResponse?.registrations || [];
-  const stats = statsResponse?.stats;
+  const registrations = (registrationsResponse as any)?.registrations || [];
+  const stats = (statsResponse as any)?.stats;
 
   // Mutation for updating registration status
   const updateStatusMutation = useMutation({
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
     }
 
     const headers = ['Name', 'Class', 'Division', 'Committee', 'Email', 'Suggestions', 'Registration Time'];
-    const rows = registrations.map(reg => [
+    const rows = registrations.map((reg: any) => [
       reg.name,
       reg.class,
       reg.division,
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
     ]);
 
     const csvContent = [headers, ...rows]
-      .map(row => row.map(field => `"${field}"`).join(','))
+      .map(row => row.map((field: any) => `"${field}"`).join(','))
       .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

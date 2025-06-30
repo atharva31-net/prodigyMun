@@ -82,6 +82,7 @@ prodigy-mun-registration/
      committee TEXT NOT NULL,
      email TEXT,
      suggestions TEXT,
+     status TEXT DEFAULT 'pending' NOT NULL,
      created_at TIMESTAMP DEFAULT NOW() NOT NULL
    );
    ```
@@ -91,6 +92,7 @@ prodigy-mun-registration/
 - **Classes**: 8th, 9th, 10th, 11th, 12th
 - **Divisions**: A, B, C, D, E, F, G, H, I, J, K
 - **Committees**: 19 total committees (see committee list below)
+- **Status**: pending, confirmed, rejected (defaults to 'pending')
 - **Email**: Optional field with email validation
 - **Duplicate Prevention**: Same name + class + division cannot register twice
 
@@ -134,6 +136,7 @@ prodigy-mun-registration/
   - Body: `{ name, class, division, committee, email?, suggestions? }`
   - Response: `{ success: boolean, registration?: Registration, message?: string }`
   - Validates duplicate registrations
+  - Creates registration with default status 'pending'
 
 ### Admin Authentication
 - **POST** `/api/admin/login`
@@ -144,11 +147,21 @@ prodigy-mun-registration/
 ### Admin Data Access
 - **GET** `/api/registrations`
   - Response: `{ success: boolean, registrations: Registration[] }`
-  - Returns all student registrations
+  - Returns all student registrations with status
 
 - **GET** `/api/registrations/stats`
   - Response: `{ success: boolean, stats: Stats }`
-  - Stats: `{ total, indianCommittees, internationalCommittees, seniorStudents }`
+  - Stats: `{ total, indianCommittees, internationalCommittees, seniorStudents, pending, confirmed, rejected }`
+
+### Registration Management
+- **PATCH** `/api/registrations/:id/status`
+  - Body: `{ status: 'pending' | 'confirmed' | 'rejected' }`
+  - Response: `{ success: boolean, registration: Registration }`
+  - Updates registration status
+
+- **DELETE** `/api/registrations/:id`
+  - Response: `{ success: boolean, message: string }`
+  - Permanently deletes registration
 
 ## Frontend Components
 
