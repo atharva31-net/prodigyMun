@@ -16,6 +16,7 @@ export const registrations = pgTable("registrations", {
   committee: text("committee").notNull(),
   email: text("email"),
   suggestions: text("suggestions"),
+  status: text("status").default("pending").notNull(), // pending, confirmed, rejected
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

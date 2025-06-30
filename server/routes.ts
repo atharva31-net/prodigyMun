@@ -79,6 +79,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update registration status (confirm/reject)
+  app.patch("/api/registrations/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      if (!['pending', 'confirmed', 'rejected'].includes(status)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid status. Must be 'pending', 'confirmed', or 'rejected'" 
+        });
+      }
+      
+      const registration = await storage.updateRegistrationStatus(parseInt(id), status);
+      res.json({ success: true, registration });
+    } catch (error) {
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
+
+  // Delete registration
+  app.delete("/api/registrations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteRegistration(parseInt(id));
+      res.json({ success: true, message: "Registration deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

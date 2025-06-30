@@ -12,11 +12,16 @@ export interface IStorage {
   getRegistrationByNameAndClass(name: string, class_: string, division: string): Promise<Registration | undefined>;
   createRegistration(insertRegistration: InsertRegistration): Promise<Registration>;
   getAllRegistrations(): Promise<Registration[]>;
+  updateRegistrationStatus(id: number, status: string): Promise<Registration>;
+  deleteRegistration(id: number): Promise<void>;
   getRegistrationStats(): Promise<{
     total: number;
     indianCommittees: number;
     internationalCommittees: number;
     seniorStudents: number;
+    pending: number;
+    confirmed: number;
+    rejected: number;
   }>;
 }
 
@@ -65,17 +70,34 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(registrations).orderBy(registrations.createdAt);
   }
 
+  async updateRegistrationStatus(id: number, status: string): Promise<Registration> {
+    const [registration] = await db
+      .update(registrations)
+      .set({ status })
+      .where(eq(registrations.id, id))
+      .returning();
+    return registration;
+  }
+
+  async deleteRegistration(id: number): Promise<void> {
+    await db
+      .delete(registrations)
+      .where(eq(registrations.id, id));
+  }
+
   async getRegistrationStats(): Promise<{
     total: number;
     indianCommittees: number;
     internationalCommittees: number;
     seniorStudents: number;
+    pending: number;
+    confirmed: number;
+    rejected: number;
   }> {
     const indianCommitteeIds = ['lok-sabha', 'rajya-sabha', 'niti-aayog', 'supreme-court', 'cabinet', 'assembly'];
     
     const [totalResult] = await db.select({ count: count() }).from(registrations);
     
-    // Count Indian committees using OR conditions
     const [indianResult] = await db
       .select({ count: count() })
       .from(registrations)
@@ -100,15 +122,36 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
+    const [pendingResult] = await db
+      .select({ count: count() })
+      .from(registrations)
+      .where(eq(registrations.status, 'pending'));
+
+    const [confirmedResult] = await db
+      .select({ count: count() })
+      .from(registrations)
+      .where(eq(registrations.status, 'confirmed'));
+
+    const [rejectedResult] = await db
+      .select({ count: count() })
+      .from(registrations)
+      .where(eq(registrations.status, 'rejected'));
+
     const total = totalResult.count;
     const indian = indianResult.count;
     const senior = seniorResult.count;
+    const pending = pendingResult.count;
+    const confirmed = confirmedResult.count;
+    const rejected = rejectedResult.count;
 
     return {
       total,
       indianCommittees: indian,
       internationalCommittees: total - indian,
       seniorStudents: senior,
+      pending,
+      confirmed,
+      rejected,
     };
   }
 }

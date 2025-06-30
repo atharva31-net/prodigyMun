@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { 
   Users, 
   Flag, 
@@ -11,10 +12,17 @@ import {
   GraduationCap, 
   Download, 
   LogOut,
-  ArrowLeft 
+  ArrowLeft,
+  Check,
+  X,
+  Trash2,
+  Clock,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { getCommitteeById } from "@/lib/committees";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Registration {
   id: number;
@@ -24,6 +32,7 @@ interface Registration {
   committee: string;
   email?: string;
   suggestions?: string;
+  status: string;
   createdAt: string;
 }
 
@@ -32,10 +41,14 @@ interface Stats {
   indianCommittees: number;
   internationalCommittees: number;
   seniorStudents: number;
+  pending: number;
+  confirmed: number;
+  rejected: number;
 }
 
 export default function AdminDashboard() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: registrationsResponse, isLoading: loadingRegistrations } = useQuery({
     queryKey: ["/api/registrations"],
@@ -47,6 +60,52 @@ export default function AdminDashboard() {
 
   const registrations = registrationsResponse?.registrations || [];
   const stats = statsResponse?.stats;
+
+  // Mutation for updating registration status
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/registrations/${id}/status`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/registrations/stats"] });
+      toast({
+        title: "Status Updated",
+        description: "Registration status has been updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update registration status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for deleting registration
+  const deleteRegistrationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/registrations/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/registrations/stats"] });
+      toast({
+        title: "Registration Deleted",
+        description: "Registration has been permanently removed",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete registration",
+        variant: "destructive",
+      });
+    },
+  });
 
   const exportData = () => {
     if (registrations.length === 0) {
@@ -103,6 +162,40 @@ export default function AdminDashboard() {
     );
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return (
+          <Badge variant="default" className="bg-green-500 text-white">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Confirmed
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge variant="destructive">
+            <XCircle className="mr-1 h-3 w-3" />
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary">
+            <Clock className="mr-1 h-3 w-3" />
+            Pending
+          </Badge>
+        );
+    }
+  };
+
+  const handleStatusUpdate = (id: number, status: string) => {
+    updateStatusMutation.mutate({ id, status });
+  };
+
+  const handleDeleteRegistration = (id: number) => {
+    deleteRegistrationMutation.mutate(id);
+  };
+
   if (loadingRegistrations || loadingStats) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -145,58 +238,100 @@ export default function AdminDashboard() {
       <div className="py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8">
             <Card className="stats-card">
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center">
-                  <div className="p-3 bg-primary/10 rounded-full">
-                    <Users className="h-6 w-6 text-primary" />
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Users className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">Total Registrations</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.total || 0}</p>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">Total</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.total || 0}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="stats-card">
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center">
-                  <div className="p-3 bg-secondary/10 rounded-full">
-                    <Flag className="h-6 w-6 text-secondary" />
+                  <div className="p-2 bg-yellow-100 rounded-full">
+                    <Clock className="h-5 w-5 text-yellow-600" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">Indian Committees</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.indianCommittees || 0}</p>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.pending || 0}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="stats-card">
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <Globe className="h-6 w-6 text-blue-600" />
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">International</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.internationalCommittees || 0}</p>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">Confirmed</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.confirmed || 0}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="stats-card">
-              <CardContent className="p-6">
+              <CardContent className="p-4">
                 <div className="flex items-center">
-                  <div className="p-3 bg-yellow-100 rounded-full">
-                    <GraduationCap className="h-6 w-6 text-yellow-600" />
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <XCircle className="h-5 w-5 text-red-600" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-muted-foreground">Senior Students</p>
-                    <p className="text-2xl font-bold text-foreground">{stats?.seniorStudents || 0}</p>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">Rejected</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.rejected || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="stats-card">
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-secondary/10 rounded-full">
+                    <Flag className="h-5 w-5 text-secondary" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">Indian</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.indianCommittees || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="stats-card">
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Globe className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">International</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.internationalCommittees || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="stats-card">
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <GraduationCap className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-xs text-muted-foreground">Senior</p>
+                    <p className="text-xl font-bold text-foreground">{stats?.seniorStudents || 0}</p>
                   </div>
                 </div>
               </CardContent>
@@ -224,22 +359,81 @@ export default function AdminDashboard() {
                         <TableHead>Class</TableHead>
                         <TableHead>Division</TableHead>
                         <TableHead>Committee</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Registration Time</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {registrations.map((reg) => (
+                      {registrations.map((reg: any) => (
                         <TableRow key={reg.id} className="hover:bg-muted/50">
                           <TableCell className="font-medium">{reg.name}</TableCell>
                           <TableCell>{reg.class}</TableCell>
                           <TableCell>{reg.division}</TableCell>
                           <TableCell>{getCommitteeBadge(reg.committee)}</TableCell>
+                          <TableCell>{getStatusBadge(reg.status || 'pending')}</TableCell>
                           <TableCell className="text-muted-foreground">
                             {reg.email || 'Not provided'}
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {new Date(reg.createdAt).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              {reg.status !== 'confirmed' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-green-600 border-green-600 hover:bg-green-50"
+                                  onClick={() => handleStatusUpdate(reg.id, 'confirmed')}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {reg.status !== 'rejected' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 border-red-600 hover:bg-red-50"
+                                  onClick={() => handleStatusUpdate(reg.id, 'rejected')}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 border-red-600 hover:bg-red-50"
+                                    disabled={deleteRegistrationMutation.isPending}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Registration</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to permanently delete {reg.name}'s registration? 
+                                      This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteRegistration(reg.id)}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
