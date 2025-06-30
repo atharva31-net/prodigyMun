@@ -125,8 +125,12 @@ A comprehensive Model United Nations registration website for Prodigy Public Sch
 - Connection pooling via Neon's serverless infrastructure
 
 ## Changelog
-- June 30, 2025. Initial setup
+- June 30, 2025. Initial setup with separate Indian/International committee sections
+- June 30, 2025. Updated to unified committee display per user request
+- June 30, 2025. Changed admin password to: munprodiy#123@12@12
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Committee Display: Single unified list (not separated by Indian/International)
+Admin Credentials: admin / munprodiy#123@12@12

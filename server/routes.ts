@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const adminCredentials = {
   username: "admin",
-  password: "prodigymun0"
+  password: "munprodiy#123@12@12"
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {

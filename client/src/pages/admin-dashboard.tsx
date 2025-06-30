@@ -94,11 +94,7 @@ export default function AdminDashboard() {
     if (!committee) return <Badge variant="secondary">{committeeId}</Badge>;
     
     return (
-      <Badge 
-        variant={committee.category === 'indian' ? 'default' : 'outline'}
-        className={committee.category === 'indian' ? 'bg-secondary text-secondary-foreground' : 'border-primary text-primary'}
-      >
-        {committee.category === 'indian' ? <Flag className="mr-1 h-3 w-3" /> : <Globe className="mr-1 h-3 w-3" />}
+      <Badge variant="default" className="bg-primary text-primary-foreground">
         {committee.name}
       </Badge>
     );
