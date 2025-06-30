@@ -37,13 +37,16 @@ interface Stats {
 export default function AdminDashboard() {
   const { toast } = useToast();
 
-  const { data: registrations = [], isLoading: loadingRegistrations } = useQuery<Registration[]>({
+  const { data: registrationsResponse, isLoading: loadingRegistrations } = useQuery({
     queryKey: ["/api/registrations"],
   });
 
-  const { data: stats, isLoading: loadingStats } = useQuery<Stats>({
+  const { data: statsResponse, isLoading: loadingStats } = useQuery({
     queryKey: ["/api/registrations/stats"],
   });
+
+  const registrations = registrationsResponse?.registrations || [];
+  const stats = statsResponse?.stats;
 
   const exportData = () => {
     if (registrations.length === 0) {
